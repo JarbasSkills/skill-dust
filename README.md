@@ -1,4 +1,4 @@
-# <img src='./res/icon/dust_icon.jpg' card_color='#40DBB0' width='50' height='50' style='vertical-align:bottom'/>DUST Skill
+# <img src='./res/icon/dust_icon.png' card_color='#40DBB0' width='50' height='50' style='vertical-align:bottom'/>DUST Skill
 
 ![](./res/dust_logo.png)
 
