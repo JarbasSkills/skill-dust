@@ -7,6 +7,7 @@
 
 Dust short science fiction movies for mycroft
 
+![](./gui.png)
 
 ## Installation Notes
 
