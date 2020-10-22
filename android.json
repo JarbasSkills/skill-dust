@@ -1,0 +1,5 @@
+{
+    "android_icon": "/res/icon/dust_icon.png",
+    "android_name": "DUST",
+    "android_handler": "skill-dust.jarbasskills.home"
+}
