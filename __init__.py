@@ -39,15 +39,9 @@ class DustSkill(CommonPlaySkill):
         # this will filter private and live videos
         videos = [v for v in self.videos
                   if v.get("upload_date") and not v.get("is_live")]
-        videos = [v for v in videos if "trailer" not in v[
-            "full_title"].lower()]
-        videos = [v for v in videos if "behind the scenes" not in v[
-            "full_title"].lower()]
-        videos = [v for v in videos if "the making of" not in v[
-            "full_title"].lower()]
-        videos = [v for v in videos if "exclusive clip" not in v[
-            "full_title"].lower()]
+        # attempt to filter most trailers and clips
         videos = [v for v in videos if int(v.get("duration", 0)) >= 130]
+        # TODO filter behind the scenes and clips based on title/tags/description
 
         # sort by upload date
         videos = sorted(videos,
