@@ -2,12 +2,12 @@
 
 ![](./res/dust_logo.png)
 
-
 ## About 
 
-Dust short science fiction movies for mycroft
+Dust short science fiction movies for Mycroft
 
 ![](./gui.png)
+![](./gui2.png)
 
 ## Installation Notes
 
@@ -27,7 +27,7 @@ this requires latest CPS refactor, not yet merged in core
 
 ## Credits 
 - JarbasAl
-- [AIIX ](https://github.com/AIIX/) - for GUI
+- [AIIX ](https://github.com/AIIX/) - GUI
 - [Dust](https://www.youtube.com/c/watchdust)
 
 ## Category

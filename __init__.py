@@ -7,36 +7,64 @@ from os.path import join, dirname
 import random
 import re
 from json_database import JsonStorageXDG
+import datetime
 
 
-class DUSTSkill(CommonPlaySkill):
+def datestr2ts(datestr):
+    y = int(datestr[:4])
+    m = int(datestr[4:6])
+    d = int(datestr[-2:])
+    dt = datetime.datetime(y, m, d)
+    return dt.timestamp()
+
+
+class DustSkill(CommonPlaySkill):
 
     def __init__(self):
         super().__init__("Dust")
         self.supported_media = [CPSMatchType.GENERIC,
-                                CPSMatchType.VIDEO,
-                                CPSMatchType.TRAILER,
-                                CPSMatchType.MOVIE]
+                                CPSMatchType.MOVIE,
+                                CPSMatchType.VIDEO]
 
-        # database update
         path = join(dirname(__file__), "res", "dust.jsondb")
-
         # load video catalog
-        self.dust = Collection("Dust",
-                               logo=join(dirname(__file__), "res",
-                                         "dust_logo.png"),
-                               db_path=path)
-        self.videos = [ch.as_json() for ch in self.dust.entries]
-        self.videos = sorted(self.videos, key=lambda kv: kv["rating"],
+        videos = Collection("Dust",
+                            logo=join(dirname(__file__), "res",
+                                      "dust_logo.png"),
+                            db_path=path)
+        self.videos = [ch.as_json() for ch in videos.entries]
+        self.sort_videos()
+
+    def sort_videos(self):
+        # this will filter private and live videos
+        videos = [v for v in self.videos
+                  if v.get("upload_date") and not v.get("is_live")]
+        videos = [v for v in videos if "trailer" not in v[
+            "full_title"].lower()]
+        videos = [v for v in videos if "behind the scenes" not in v[
+            "full_title"].lower()]
+        videos = [v for v in videos if "the making of" not in v[
+            "full_title"].lower()]
+        videos = [v for v in videos if "exclusive clip" not in v[
+            "full_title"].lower()]
+        videos = [v for v in videos if int(v.get("duration", 0)) >= 130]
+
+        # sort by upload date
+        videos = sorted(videos,
+                             key=lambda kv: datestr2ts(kv["upload_date"]),
                              reverse=True)
+        # live streams before videos
+        self.videos =  [v for v in self.videos if v.get("is_live")] + videos
 
     def initialize(self):
         self.add_event('skill-dust.jarbasskills.home',
                        self.handle_homescreen)
-        self.gui.register_handler("skill-dust.jarbasskills.play_event",
+        self.gui.register_handler(
+            "skill-dust.jarbasskills.play_event",
                                   self.play_video_event)
-        self.gui.register_handler("skill-dust.jarbasskills.clear_history",
-                                  self.handle_clear_history)
+        self.gui.register_handler(
+            "skill-dust.jarbasskills.clear_history",
+            self.handle_clear_history)
 
     def get_intro_message(self):
         self.speak_dialog("intro")
@@ -45,80 +73,40 @@ class DUSTSkill(CommonPlaySkill):
     def handle_homescreen_utterance(self, message):
         self.handle_homescreen(message)
 
-    # homescreen
+    # homescreen events
     def handle_homescreen(self, message):
-        videos = list(self.videos)
-        videos = [v for v in videos if "trailer" not in v[
-                "full_title"].lower()]
-        videos = [v for v in videos if "behind the scenes" not in v[
-            "full_title"].lower()]
-        videos = [v for v in videos if "the making of" not in v[
-            "full_title"].lower()]
-        videos = [v for v in videos if "exclusive clip" not in v[
-            "full_title"].lower()]
         self.gui.clear()
-        self.gui["mytvtogoHomeModel"] = videos
-        self.gui["historyModel"] = JsonStorageXDG("dust-history").get("model", [])
+        self.gui["mytvtogoHomeModel"] = self.videos
+        self.gui["historyModel"] = JsonStorageXDG("dust-history")\
+            .get("model", [])
         self.gui.show_page("Homescreen.qml", override_idle=True)
 
-    # play GUI event
     def play_video_event(self, message):
         video_data = message.data["modelData"]
-        self.play_dust(video_data)
+        self.play_video(video_data)
 
-    # clear history GUI event
-    def handle_clear_history(self, message):
-        historyDB = JsonStorageXDG("dust-history")
-        historyDB["model"] = []
-        historyDB.store()
-
-    # common play
-    def play_dust(self, video_data):
-        if not self.gui.connected:
-            self.log.error("GUI is required for DUST skill, "
-                           "but no GUI connection was detected")
-            raise RuntimeError
-        # add to playback history
-
+    # watch history database
+    def add_to_history(self, video_data):
         # History
         historyDB = JsonStorageXDG("dust-history")
         if "model" not in historyDB:
             historyDB["model"] = []
         historyDB["model"].append(video_data)
         historyDB.store()
-
         self.gui["historyModel"] = historyDB["model"]
-        # play video
-        video = Media.from_json(video_data)
-        url = str(video.streams[0])
-        self.gui.play_video(url, video.name)
 
-    def remove_voc(self, utt, voc_filename, lang=None):
-        lang = lang or self.lang
-        cache_key = lang + voc_filename
+    def handle_clear_history(self, message):
+        historyDB = JsonStorageXDG("dust-history")
+        historyDB["model"] = []
+        historyDB.store()
 
-        if cache_key not in self.voc_match_cache:
-            # trigger caching
-            self.voc_match(utt, voc_filename, lang)
-
-        if utt:
-            # Check for matches against complete words
-            for i in self.voc_match_cache[cache_key]:
-                # Substitute only whole words matching the token
-                utt = re.sub(r'\b' + i + r"\b", "", utt)
-
-        return utt
-
+    # matching
     def match_media_type(self, phrase, media_type):
         match = None
         score = 0
 
         if self.voc_match(phrase,
                           "video") or media_type == CPSMatchType.VIDEO:
-            score += 0.1
-            match = CPSMatchLevel.GENERIC
-
-        if media_type == CPSMatchType.TRAILER:
             score += 0.05
             match = CPSMatchLevel.GENERIC
 
@@ -136,14 +124,71 @@ class DUSTSkill(CommonPlaySkill):
 
         if self.voc_match(phrase,
                           "movie") or media_type == CPSMatchType.MOVIE:
-            score += 0.2
+            score += 0.1
             match = CPSMatchLevel.CATEGORY
 
         if self.voc_match(phrase, "dust"):
-            score += 0.2
+            score += 0.3
             match = CPSMatchLevel.TITLE
 
         return match, score
+
+    def match_tags(self, video, phrase, match):
+        score = 0
+        # score tags
+        leftover_text = phrase
+        tags = list(set(video.get("tags") or []))
+        if tags:
+            # tag match bonus
+            for tag in tags:
+                tag = tag.lower().strip()
+                if tag in phrase:
+                    match = CPSMatchLevel.CATEGORY
+                    score += 0.1
+                    leftover_text = leftover_text.replace(tag, "")
+        return match, score, leftover_text
+
+    def match_description(self, video, phrase, match):
+        # score description
+        score = 0
+        leftover_text = phrase
+        words = video.get("description", "").split(" ")
+        for word in words:
+            if len(word) > 4 and word in leftover_text:
+                score += 0.05
+        return match, score, leftover_text
+
+    def match_title(self, videos, phrase, match):
+        # match video name
+        leftover_text = phrase
+        best_score = 0
+        best_video = random.choice(videos)
+        for video in videos:
+            title = video["title"]
+            score = fuzzy_match(phrase, self._clean_title(title))
+            if score >= best_score:
+                # TODO handle ties
+                match = CPSMatchLevel.TITLE
+                best_video = video
+                best_score = score
+                leftover_text = title
+        return match, best_score, best_video, leftover_text
+
+    def remove_voc(self, utt, voc_filename, lang=None):
+        lang = lang or self.lang
+        cache_key = lang + voc_filename
+
+        if cache_key not in self.voc_match_cache:
+            # trigger caching
+            self.voc_match(utt, voc_filename, lang)
+
+        if utt:
+            # Check for matches against complete words
+            for i in self.voc_match_cache[cache_key]:
+                # Substitute only whole words matching the token
+                utt = re.sub(r'\b' + i + r"\b", "", utt)
+
+        return utt
 
     def _clean_title(self, title):
         title = title.lower().strip()
@@ -158,67 +203,36 @@ class DUSTSkill(CommonPlaySkill):
             .strip()
         return title
 
+    # common play
     def CPS_match_query_phrase(self, phrase, media_type):
-        leftover_text = phrase
         best_score = 0
-
-        # dont match if gui is not connected
-        if not self.gui.connected:
-            return None
-
+        best_video = None
         # see if media type is in query, base_score will depend if "scifi"
         # or "video" is in query
         match, base_score = self.match_media_type(phrase, media_type)
-
         videos = list(self.videos)
-        if self.voc_match(phrase, "trailer") or \
-                media_type == CPSMatchType.TRAILER:
-            videos = [v for v in videos if "trailer" in v[
-                "full_title"].lower()]
-        else:
-            videos = [v for v in videos if "trailer" not in v[
-                "full_title"].lower()]
 
-        best_video = random.choice(videos)
-
-        # score video data
-        for ch in videos:
-            score = 0
-            # score tags
-            tags = list(set(ch.get("tags", [])))
-            if tags:
-                # tag match bonus
-                for tag in tags:
-                    tag = tag.lower().strip()
-                    if tag in phrase and tag != "dust":
-                        match = CPSMatchLevel.CATEGORY
-                        score += 0.2
-                        leftover_text = leftover_text.replace(tag, "")
-
-            # score description
-            words = ch.get("summary", "").split(" ")
-            for word in words:
-                if len(word) > 4 and word in leftover_text:
-                    score += 0.05
-
+        # match video data
+        for video in videos:
+            match, score, leftover_text = self.match_tags(video, phrase, match)
+           # match, score, leftover_text = self.match_description(video,
+           #
+            #                                                      leftover_text,
+           #                                                      match)
             if score > best_score:
-                best_video = ch
+                best_video = video
                 best_score = score
 
         # match video name
-        for ch in videos:
-            title = self._clean_title(ch["full_title"])
+        match, score, video, leftover_text = self.match_title(
+            videos, phrase, match)
 
-            score = fuzzy_match(leftover_text, title)
-            if score >= best_score:
-                # TODO handle ties
-                match = CPSMatchLevel.TITLE
-                best_video = ch
-                best_score = score
-                leftover_text = title
+        if score > best_score:
+            best_video = video
+            best_score = score
 
         if not best_video:
-            self.log.debug("No DUST matches")
+            self.log.debug("No Dust matches")
             return None
 
         if best_score < 0.6:
@@ -241,15 +255,29 @@ class DUSTSkill(CommonPlaySkill):
         elif score >= 0.5:
             match = CPSMatchLevel.TITLE
 
-        self.log.debug("Best DUST video: " + best_video["full_title"])
+        self.log.debug("Best Dust video: " + best_video["title"])
 
         if match is not None:
             return (leftover_text, match, best_video)
         return None
 
     def CPS_start(self, phrase, data):
-        self.play_dust(data)
+        self.play_video(data)
+
+    def play_video(self, video_data):
+        # TODO audio only
+        # if self.gui.connected:
+        #    ...
+        # else:
+        #    self.audioservice.play(video_data["url"])
+        # add to playback history
+
+        self.add_to_history(video_data)
+        # play video
+        video = Media.from_json(video_data)
+        url = str(video.streams[0])
+        self.gui.play_video(url, video.name)
 
 
 def create_skill():
-    return DUSTSkill()
+    return DustSkill()
