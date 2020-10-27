@@ -22,6 +22,14 @@ class DustSkill(CommonPlaySkill):
 
     def __init__(self):
         super().__init__("Dust")
+        if "max_videos" not in self.settings:
+            self.settings["max_videos"] = 500
+        if "min_duration" not in self.settings:
+            self.settings["min_duration"] = 130
+        if "max_duration" not in self.settings:
+            self.settings["max_duration"] = -1
+        if "shuffle_menu" not in self.settings:
+            self.settings["shuffle_menu"] = False
         self.supported_media = [CPSMatchType.GENERIC,
                                 CPSMatchType.MOVIE,
                                 CPSMatchType.VIDEO]
@@ -35,21 +43,6 @@ class DustSkill(CommonPlaySkill):
         self.videos = [ch.as_json() for ch in videos.entries]
         self.sort_videos()
 
-    def sort_videos(self):
-        # this will filter private and live videos
-        videos = [v for v in self.videos
-                  if v.get("upload_date") and not v.get("is_live")]
-        # attempt to filter most trailers and clips
-        videos = [v for v in videos if int(v.get("duration", 0)) >= 130]
-        # TODO filter behind the scenes and clips based on title/tags/description
-
-        # sort by upload date
-        videos = sorted(videos,
-                             key=lambda kv: datestr2ts(kv["upload_date"]),
-                             reverse=True)
-        # live streams before videos
-        self.videos =  [v for v in self.videos if v.get("is_live")] + videos
-
     def initialize(self):
         self.add_event('skill-dust.jarbasskills.home',
                        self.handle_homescreen)
@@ -60,6 +53,7 @@ class DustSkill(CommonPlaySkill):
             "skill-dust.jarbasskills.clear_history",
             self.handle_clear_history)
 
+    # voice interaction
     def get_intro_message(self):
         self.speak_dialog("intro")
 
@@ -67,10 +61,43 @@ class DustSkill(CommonPlaySkill):
     def handle_homescreen_utterance(self, message):
         self.handle_homescreen(message)
 
-    # homescreen events
+    # homescreen / menu
+    def sort_videos(self):
+        # this will filter private and live videos
+        videos = [v for v in self.videos
+                  if v.get("upload_date") and not v.get("is_live")]
+
+        # sort by upload date
+        videos = sorted(videos,
+                             key=lambda kv: datestr2ts(kv["upload_date"]),
+                             reverse=True)
+        # live streams before videos
+        self.videos =  [v for v in self.videos if v.get("is_live")] + videos
+
+    def filter_videos(self):
+        videos = self.videos
+        # filter by duration
+        videos = [v for v in videos if int(v.get("duration", 0)) >=
+                  self.settings["min_duration"]]
+        if self.settings["max_duration"] > 0:
+            videos = [v for v in videos if int(v.get("duration", 0)) <=
+                      self.settings["max_duration"]]
+
+        # TODO filter behind the scenes, clips etc based on
+        #  title/tags/description/keywords required or forbidden
+
+        if self.settings["shuffle_menu"]:
+            random.shuffle(videos)
+
+        if self.settings["max_videos"]:
+            # rendering takes forever if there are too many entries
+            videos = videos[:self.settings["max_videos"]]
+
+        return videos
+
     def handle_homescreen(self, message):
         self.gui.clear()
-        self.gui["videosHomeModel"] = self.videos
+        self.gui["videosHomeModel"] = self.filter_videos()
         self.gui["historyModel"] = JsonStorageXDG("dust-history")\
             .get("model", [])
         self.gui.show_page("Homescreen.qml", override_idle=True)
