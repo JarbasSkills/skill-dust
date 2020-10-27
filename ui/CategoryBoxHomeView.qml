@@ -25,36 +25,36 @@ import "views" as Views
 import "delegates" as Delegates
 
 Item {
-    property var mytvtogoHomeListModel: sessionData.mytvtogoHomeModel
+    property var videosHomeListModel: sessionData.videosHomeModel
 
     Layout.fillWidth: true
     Layout.fillHeight: true
     
     onFocusChanged: {
         if(focus){
-            mytvtogoListView.forceActiveFocus()
+            videosListView.forceActiveFocus()
         }
     }
     
-    onMytvtogoHomeListModelChanged: {
-        mytvtogoListView.forceLayout()
+    onVideosHomeListModelChanged: {
+        videosListView.forceLayout()
     }
     
     Item {
-        id: mytvtogoContainer
+        id: videosContainer
         anchors.fill: parent
         anchors.leftMargin: Kirigami.Units.gridUnit
         anchors.rightMargin: Kirigami.Units.gridUnit
             
         Kirigami.CardsGridView {
-            id: mytvtogoListView
+            id: videosListView
             anchors.fill: parent
             anchors.leftMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
             cellHeight: cellWidth * 0.5625 + Kirigami.Units.gridUnit * 2.5
             displayMarginBeginning: 125
             displayMarginEnd: 125
             focus: false
-            model: mytvtogoHomeListModel
+            model: videosHomeListModel
             delegate: Delegates.GridVideoCard{}
         }
     }

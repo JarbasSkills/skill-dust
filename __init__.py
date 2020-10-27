@@ -70,7 +70,7 @@ class DustSkill(CommonPlaySkill):
     # homescreen events
     def handle_homescreen(self, message):
         self.gui.clear()
-        self.gui["mytvtogoHomeModel"] = self.videos
+        self.gui["videosHomeModel"] = self.videos
         self.gui["historyModel"] = JsonStorageXDG("dust-history")\
             .get("model", [])
         self.gui.show_page("Homescreen.qml", override_idle=True)
