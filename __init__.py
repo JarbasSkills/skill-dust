@@ -262,13 +262,13 @@ class DustSkill(CommonPlaySkill):
             best_video = best_title
             best_score = title_score
 
-        if not best_video:
-            self.log.debug("No Dust matches")
-            return None
-
+        # sort matches
         scores = sorted(scores, key=lambda k: k[1], reverse=True)
         scores.insert(0, (best_title, title_score))
+        scores.remove((best_video, best_score))
+        scores.insert(0, (best_video, best_score))
 
+        # choose from top N
         if best_score < 0.5:
             n = 50
         elif best_score < 0.6:
@@ -278,15 +278,12 @@ class DustSkill(CommonPlaySkill):
         else:
             n = 1
 
-        # choose from top N
         candidates = scores[:n]
-        self.log.debug("Best Dust Match: {s}, {t}".format(
-            s=best_score, t=best_video["title"]))
-
         self.log.info("Choosing randomly from top {n} Dust matches".format(
             n=len(candidates)))
         best_video = random.choice(candidates)[0]
 
+        # calc final confidence
         score = base_score + best_score
 
         if self.voc_match(phrase, "dust"):
