@@ -279,11 +279,13 @@ class DustSkill(CommonPlaySkill):
             n = 1
 
         # choose from top N
+        candidates = scores[:n]
         self.log.debug("Best Dust Match: {s}, {t}".format(
             s=best_score, t=best_video["title"]))
+
         self.log.info("Choosing randomly from top {n} Dust matches".format(
-            n=n))
-        best_video = random.choice(scores[:n])[0]
+            n=len(candidates)))
+        best_video = random.choice(candidates)[0]
 
         score = base_score + best_score
 
