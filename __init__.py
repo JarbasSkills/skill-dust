@@ -28,7 +28,7 @@ class DustSkill(CommonPlaySkill):
 
         path = join(dirname(__file__), "res", "dust.jsondb")
         # load video catalog
-        videos = Collection("Dust",
+        videos = Collection("dust",
                             logo=join(dirname(__file__), "res",
                                       "dust_logo.png"),
                             db_path=path)
@@ -138,7 +138,7 @@ class DustSkill(CommonPlaySkill):
                 tag = tag.lower().strip()
                 if tag in phrase:
                     match = CPSMatchLevel.CATEGORY
-                    score += 0.1
+                    score += 0.05
                     leftover_text = leftover_text.replace(tag, "")
         return match, score, leftover_text
 
@@ -148,24 +148,28 @@ class DustSkill(CommonPlaySkill):
         leftover_text = phrase
         words = video.get("description", "").split(" ")
         for word in words:
-            if len(word) > 4 and word in leftover_text:
+            if len(word) > 4 and word in self._clean_title(leftover_text):
                 score += 0.05
+                leftover_text = leftover_text.replace(word, "")
         return match, score, leftover_text
 
     def match_title(self, videos, phrase, match):
         # match video name
+        clean_phrase = self._clean_title(phrase)
         leftover_text = phrase
         best_score = 0
         best_video = random.choice(videos)
         for video in videos:
             title = video["title"]
-            score = fuzzy_match(phrase, self._clean_title(title))
+            score = fuzzy_match(clean_phrase, self._clean_title(title))
+            if phrase.lower() in title.lower() or\
+                    clean_phrase in self._clean_title(title):
+                score += 0.3
             if score >= best_score:
-                # TODO handle ties
                 match = CPSMatchLevel.TITLE
                 best_video = video
                 best_score = score
-                leftover_text = title
+                leftover_text = phrase.replace(title, "")
         return match, best_score, best_video, leftover_text
 
     def remove_voc(self, utt, voc_filename, lang=None):
@@ -195,7 +199,8 @@ class DustSkill(CommonPlaySkill):
         title = title.replace("|", "").replace('"', "") \
             .replace(':', "").replace('”', "").replace('“', "") \
             .strip()
-        return title
+        return " ".join([w for w in title.split(" ") if w]) # remove extra
+        # spaces
 
     # common play
     def CPS_match_query_phrase(self, phrase, media_type):
@@ -207,31 +212,51 @@ class DustSkill(CommonPlaySkill):
         videos = list(self.videos)
 
         # match video data
+        scores = []
         for video in videos:
-            match, score, leftover_text = self.match_tags(video, phrase, match)
-           # match, score, leftover_text = self.match_description(video,
-           #
-            #                                                      leftover_text,
-           #                                                      match)
+            match, score, _ = self.match_tags(video, phrase, match)
+            # match, score, leftover_text = self.match_description(video, leftover_text, match)
+            scores.append((video, score))
             if score > best_score:
                 best_video = video
                 best_score = score
 
-        # match video name
-        match, score, video, leftover_text = self.match_title(
-            videos, phrase, match)
+        self.log.debug("Best Dust Tags Match: {s}, {t}".format(
+            s=best_score, t=best_video["title"]))
 
-        if score > best_score:
-            best_video = video
-            best_score = score
+        # match video name
+        match, title_score, best_title, leftover_text = self.match_title(
+            videos, phrase, match)
+        self.log.debug("Best Dust Title Match: {s}, {t}".format(
+            s=title_score, t=best_title["title"]))
+
+        # title more important than tags
+        if title_score + 0.15 > best_score:
+            best_video = best_title
+            best_score = title_score
 
         if not best_video:
             self.log.debug("No Dust matches")
             return None
 
-        if best_score < 0.6:
-            self.log.debug("Low score, randomizing results")
-            best_video = random.choice(videos)
+        scores = sorted(scores, key=lambda k: k[1], reverse=True)
+        scores.insert(0, (best_title, title_score))
+
+        if best_score < 0.5:
+            n = 50
+        elif best_score < 0.6:
+            n = 10
+        elif best_score < 0.8:
+            n = 3
+        else:
+            n = 1
+
+        # choose from top N
+        self.log.debug("Best Dust Match: {s}, {t}".format(
+            s=best_score, t=best_video["title"]))
+        self.log.info("Choosing randomly from top {n} Dust matches".format(
+            n=n))
+        best_video = random.choice(scores[:n])[0]
 
         score = base_score + best_score
 

@@ -176,7 +176,7 @@ ItemDelegate {
         busyIndicatorPop.open()
         if(model.identifier != "showmore") {
             triggerGuiEvent("skill-dust.jarbasskills.play_event",
-            {"modelData": {"title": model.title, "streams": model.streams,
+            {"modelData": {"title": model.title, "url": model.url,
             "lang": model.lang, "logo": model.logo, "tags": model.tags,
             "identifier": model.identifier}})
         }
