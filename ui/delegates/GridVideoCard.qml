@@ -9,7 +9,8 @@ ItemDelegate {
     id: delegate
     
     readonly property bool isCurrent: {
-        mytvtogoListView.currentIndex == index && activeFocus && !mytvtogoListView.moving
+        videosListView.currentIndex == index && activeFocus && !videosListView
+        .moving
     }
 
     property int borderSize: Kirigami.Units.smallSpacing
@@ -27,7 +28,7 @@ ItemDelegate {
     rightInset: Kirigami.Units.largeSpacing
     bottomInset: Kirigami.Units.largeSpacing
     
-    implicitHeight: mytvtogoListView.cellHeight
+    implicitHeight: videosListView.cellHeight
     
     background: Item {
         id: background
@@ -133,8 +134,8 @@ ItemDelegate {
     }
 
     onClicked: {
-        mytvtogoListView.forceActiveFocus()
-        mytvtogoListView.currentIndex = index
+        videosListView.forceActiveFocus()
+        videosListView.currentIndex = index
         busyIndicatorPop.open()
         if(model.identifier != "showmore") {
             triggerGuiEvent("skill-dust.jarbasskills.play_event",
