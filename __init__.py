@@ -1,5 +1,5 @@
-from ovos_utils.waiting_for_mycroft.common_play import CommonPlaySkill, \
-    CPSMatchLevel, CPSTrackStatus, CPSMatchType
+from ovos_utils.waiting_for_mycroft.common_play import CPSMatchLevel, \
+    CPSMatchType
 from ovos_utils.skills.templates.media_collection import MediaCollectionSkill
 from mycroft.skills.core import intent_file_handler
 from mycroft.util.parse import fuzzy_match, match_one
@@ -28,7 +28,7 @@ class DustSkill(MediaCollectionSkill):
     def get_intro_message(self):
         self.speak_dialog("intro")
 
-    @intent_file_handler('dusthome.intent')
+    @intent_file_handler('home.intent')
     def handle_homescreen_utterance(self, message):
         self.handle_homescreen(message)
 
