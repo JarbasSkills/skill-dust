@@ -11,7 +11,6 @@ class DustSkill(VideoCollectionSkill):
         super().__init__("Dust")
         self.supported_media = [CPSMatchType.GENERIC,
                                 CPSMatchType.MOVIE,
-                                CPSMatchType.TRAILER,
                                 CPSMatchType.VIDEO]
         self.message_namespace = basename(dirname(__file__)) + ".jarbasskills"
         # load video catalog
@@ -22,7 +21,6 @@ class DustSkill(VideoCollectionSkill):
         self.skill_logo = join(dirname(__file__), "ui", "dust_icon.png")
         self.skill_icon = join(dirname(__file__), "ui", "dust_icon.png")
         self.default_bg = logo
-        self.media_type = CPSMatchType.MOVIE
 
     # voice interaction
     def get_intro_message(self):
@@ -55,7 +53,7 @@ class DustSkill(VideoCollectionSkill):
             score += 5
 
         if self.voc_match(phrase, "scifi"):
-            score += 50
+            score += 15
             if self.voc_match(phrase, "dust"):
                 score += 40
 
@@ -63,20 +61,11 @@ class DustSkill(VideoCollectionSkill):
             score += 5
 
         if self.voc_match(phrase, "movie") or media_type == CPSMatchType.MOVIE:
-            score += 10
+            score += 5
 
         if self.voc_match(phrase, "dust"):
             score += 10
 
-        return score
-
-    def match_title(self, video, phrase, media_type):
-        score = super().match_title(video, phrase, media_type)
-        if media_type == CPSMatchType.TRAILER and \
-                not self.voc_match(video["title"], "trailer"):
-            score = 0
-        elif self.voc_match(video["title"], "trailer"):
-            score -= 30
         return score
 
 
