@@ -59,6 +59,7 @@ class DustSkill(VideoCollectionSkill):
             score += 50
             if self.voc_match(phrase, "dust"):
                 score += 40
+                self.CPS_extend_timeout(1)
 
         if self.voc_match(phrase, "horror"):
             score += 5
