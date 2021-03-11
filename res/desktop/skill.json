@@ -1,0 +1,23 @@
+{
+  "name": "DUST Skill",
+  "skillname": "skill-dust",
+  "authorname": "JarbasSkills",
+  "foldername": "",
+  "url": "https://github.com/JarbasSkills/skill-dust",
+  "branch": "v0.1",
+  "desktopFile": false,
+  "warning": "",
+  "systemDeps": false,
+  "platforms": [
+    "arm",
+    "arm64",
+    "i386",
+    "x86_64",
+    "ia64"
+  ],
+  "examples": [
+    "open dust",
+    "play science fiction short movie",
+    "play dust"
+  ]
+}
