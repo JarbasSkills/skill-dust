@@ -26,7 +26,7 @@ class DustSkill(VideoCollectionSkill):
         self.skill_icon = join(dirname(__file__), "ui", "dust_icon.png")
         self.default_bg = logo
         self.media_type = CommonPlayMediaType.SHORT_FILM
-        self.playback_type = CommonPlayPlaybackType.GUI
+        self.playback_type = CommonPlayPlaybackType.VIDEO
 
     # voice interaction
     def get_intro_message(self):
