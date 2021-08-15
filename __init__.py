@@ -11,8 +11,7 @@ class DustSkill(VideoCollectionSkill):
 
     def __init__(self):
         super().__init__("Dust")
-        self.supported_media = [CommonPlayMediaType.GENERIC,
-                                CommonPlayMediaType.MOVIE,
+        self.supported_media = [CommonPlayMediaType.MOVIE,
                                 CommonPlayMediaType.SHORT_FILM,
                                 CommonPlayMediaType.VIDEO]
         self.message_namespace = basename(dirname(__file__)) + ".jarbasskills"
