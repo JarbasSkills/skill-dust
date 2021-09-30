@@ -1,8 +1,7 @@
 from mycroft.skills.core import intent_file_handler
 from pyvod import Collection, Media
 from os.path import join, dirname, basename
-from ovos_workshop.frameworks.playback import CommonPlayMediaType, CommonPlayPlaybackType, \
-    CommonPlayMatchConfidence
+from ovos_plugin_common_play.ocp import MediaType, PlaybackType, MatchConfidence
 from ovos_workshop.skills.video_collection import VideoCollectionSkill
 import biblioteca
 
@@ -11,9 +10,9 @@ class DustSkill(VideoCollectionSkill):
 
     def __init__(self):
         super().__init__("Dust")
-        self.supported_media = [CommonPlayMediaType.MOVIE,
-                                CommonPlayMediaType.SHORT_FILM,
-                                CommonPlayMediaType.VIDEO]
+        self.supported_media = [MediaType.MOVIE,
+                                MediaType.SHORT_FILM,
+                                MediaType.VIDEO]
         self.message_namespace = basename(dirname(__file__)) + ".jarbasskills"
         # load video catalog
         base_folder = biblioteca.download("ytcat_dust")
@@ -24,8 +23,8 @@ class DustSkill(VideoCollectionSkill):
         self.skill_logo = join(dirname(__file__), "ui", "dust_icon.png")
         self.skill_icon = join(dirname(__file__), "ui", "dust_icon.png")
         self.default_bg = logo
-        self.media_type = CommonPlayMediaType.SHORT_FILM
-        self.playback_type = CommonPlayPlaybackType.VIDEO
+        self.media_type = MediaType.SHORT_FILM
+        self.playback_type = PlaybackType.VIDEO
 
     # voice interaction
     def get_intro_message(self):
@@ -51,7 +50,7 @@ class DustSkill(VideoCollectionSkill):
 
     def match_media_type(self, phrase, media_type):
         score = 0
-        if self.voc_match(phrase, "video") or media_type == CommonPlayMediaType.VIDEO:
+        if self.voc_match(phrase, "video") or media_type == MediaType.VIDEO:
             score += 5
 
         if self.voc_match(phrase, "short"):
@@ -65,10 +64,10 @@ class DustSkill(VideoCollectionSkill):
         if self.voc_match(phrase, "horror"):
             score += 5
 
-        if self.voc_match(phrase, "movie") or media_type == CommonPlayMediaType.MOVIE:
+        if self.voc_match(phrase, "movie") or media_type == MediaType.MOVIE:
             score += 10
 
-        if media_type == CommonPlayMediaType.SHORT_FILM:
+        if media_type == MediaType.SHORT_FILM:
             score += 30
 
         if self.voc_match(phrase, "dust"):
