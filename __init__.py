@@ -1,10 +1,11 @@
 from os.path import join, dirname
-import random
+
 from ovos_plugin_common_play.ocp import MediaType, PlaybackType
+from ovos_utils.log import LOG
 from ovos_utils.parse import fuzzy_match
 from ovos_workshop.skills.common_play import OVOSCommonPlaybackSkill, \
     ocp_search, ocp_featured_media
-from youtube_archivist import YoutubeArchivist
+from youtube_archivist import YoutubeMonitor
 
 
 class DustSkill(OVOSCommonPlaybackSkill):
@@ -15,26 +16,18 @@ class DustSkill(OVOSCommonPlaybackSkill):
                                 MediaType.GENERIC,
                                 MediaType.SHORT_FILM,
                                 MediaType.VIDEO]
-        self.archive = YoutubeArchivist("dust", blacklisted_kwords=["trailer"])
+        self.archive = YoutubeMonitor("dust",
+                                      blacklisted_kwords=["trailer"],
+                                      logger=LOG)
         self.skill_icon = join(dirname(__file__), "ui", "dust_icon.png")
 
     def initialize(self):
-        if len(self.archive.db):
-            # update db sometime in the next 12 hours, randomized to avoid a huge network load every boot
-            # (every skill updating at same time)
-            self.schedule_event(self._scheduled_update, random.randint(3600, 12 * 3600))
-        else:
-            # no database, sync right away
-            self.schedule_event(self._scheduled_update, 5)
-
-    def _scheduled_update(self):
-        self.update_db()
-        self.schedule_event(self._scheduled_update, random.randint(3600, 12 * 3600))  # every 6 hours
-
-    def update_db(self):
         url = "https://www.youtube.com/c/watchdust"
-        self.archive.archive_channel(url)
-        self.archive.remove_unavailable()  # check if video is still available
+        bootstrap = "https://raw.githubusercontent.com/OpenJarbas/streamindex/main/dust.json"
+        self.archive.bootstrap_from_url(bootstrap)
+        self.archive.monitor(url)
+        self.archive.setDaemon(True)
+        self.archive.start()
 
     def normalize_title(self, title):
         title = title.lower().strip()
@@ -67,21 +60,10 @@ class DustSkill(OVOSCommonPlaybackSkill):
         return min(100, score)
 
     def get_playlist(self, num_entries=250):
-        pl = [{
-            "title": video["title"],
-            "image": video["thumbnail"],
-            "match_confidence": 70,
-            "media_type": MediaType.SHORT_FILM,
-            "uri": "youtube//" + video["url"],
-            "playback": PlaybackType.VIDEO,
-            "skill_icon": self.skill_icon,
-            "bg_image": video["thumbnail"],
-            "skill_id": self.skill_id
-        }  for video in self.archive.sorted_entries()][:num_entries]
         return {
             "match_confidence": 70,
             "media_type": MediaType.SHORT_FILM,
-            "playlist": pl,
+            "playlist": self.featured_media()[:num_entries],
             "playback": PlaybackType.VIDEO,
             "skill_icon": self.skill_icon,
             "image": self.skill_icon,
@@ -116,9 +98,18 @@ class DustSkill(OVOSCommonPlaybackSkill):
 
     @ocp_featured_media()
     def featured_media(self):
-        return self.get_playlist()['playlist']
+        return [{
+            "title": video["title"],
+            "image": video["thumbnail"],
+            "match_confidence": 70,
+            "media_type": MediaType.SHORT_FILM,
+            "uri": "youtube//" + video["url"],
+            "playback": PlaybackType.VIDEO,
+            "skill_icon": self.skill_icon,
+            "bg_image": video["thumbnail"],
+            "skill_id": self.skill_id
+        } for video in self.archive.sorted_entries()]
 
 
 def create_skill():
     return DustSkill()
-
