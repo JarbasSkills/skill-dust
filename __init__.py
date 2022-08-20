@@ -22,7 +22,7 @@ class DustSkill(OVOSCommonPlaybackSkill):
 
     def initialize(self):
         url = "https://www.youtube.com/c/watchdust"
-        bootstrap = "https://raw.githubusercontent.com/OpenJarbas/streamindex/main/dust.json"
+        bootstrap = "https://github.com/JarbasSkills/skill-dust/raw/dev/bootstrap.json"
         self.archive.bootstrap_from_url(bootstrap)
         self.archive.monitor(url)
         self.archive.setDaemon(True)

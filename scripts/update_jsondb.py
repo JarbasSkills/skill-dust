@@ -18,6 +18,8 @@ if isfile(cache_file):
     except:
         pass  # corrupted for some reason
 
+    shutil.rmtree(cache_file, ignore_errors=True)
+
 
 # parse new vids
 archive.parse_videos(url)
