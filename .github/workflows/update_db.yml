@@ -17,7 +17,7 @@ jobs:
       - name: Install Tools
         run: |
           python -m pip install build wheel
-          pip install git+
+          pip install .
       - name: Run webscrap script
         run: |
           python scripts/update_jsondb.py
