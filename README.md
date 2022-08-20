@@ -2,33 +2,36 @@
 
 ![](./res/dust_logo.png)
 
-## About 
+## About
 
 Dust short science fiction movies for Mycroft
 
 ![](./gui.png)
 ![](./gui2.png)
 
-## Installation Notes
+this skill requires [OCP](https://github.com/OpenVoiceOS/ovos-ocp-audio-plugin)
 
-this requires [skill-better-playback-control](https://github.com/JarbasSkills/skill-better-playback-control), it will blacklist and replace the official mycroft skill
+## Examples
 
-## Examples 
-
-* "open dust"
 * "play sci fi short movie"
 * "play dust"
 
-## Credits 
+## Credits
+
 - JarbasAl
 - [AIIX ](https://github.com/AIIX/) - GUI
 - [Dust](https://www.youtube.com/c/watchdust)
 
 ## Category
+
 **Entertainment**
 
 ## Tags
-#scifi
-#shortfilms
-#video
-#entertainment
+
+# scifi
+
+# shortfilms
+
+# video
+
+# entertainment

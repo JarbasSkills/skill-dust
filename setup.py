@@ -17,7 +17,7 @@ setup(
     package_data={'skill_dust': ['locale/*', 'ui/*']},
     packages=['skill_dust'],
     include_package_data=True,
-    install_requires=["ovos_workshop~=0.0.5a1"],
+    install_requires=["ovos_workshop>=0.0.5a1", "youtube_archivist~=0.0.3"],
     keywords='ovos skill plugin',
     entry_points={'ovos.plugin.skill': PLUGIN_ENTRY_POINT}
 )
