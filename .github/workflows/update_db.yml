@@ -20,7 +20,7 @@ jobs:
           pip install youtube_archivist==0.0.3
       - name: Run webscrap script
         run: |
-          python scripts/update_jsondb.py
+          sudo python scripts/update_jsondb.py
       - name: Commit to dev
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
