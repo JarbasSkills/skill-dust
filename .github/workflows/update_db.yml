@@ -18,6 +18,7 @@ jobs:
         run: |
           sudo pip install build wheel
           sudo pip install youtube_archivist==0.0.3
+          sudo pip install git+https://github.com/pishiko/pytube@fix-channel
       - name: Run webscrap script
         run: |
           sudo python scripts/update_jsondb.py
