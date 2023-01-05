@@ -1,6 +1,9 @@
 name: Update Json Database
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - dev
 
 jobs:
   scrap_and_commit:
@@ -16,9 +19,9 @@ jobs:
           python-version: 3.8
       - name: Install Tools
         run: |
-          sudo pip install build wheel
+          python -m pip install build wheel
           sudo pip install youtube_archivist==0.0.3
-          sudo pip install git+https://github.com/pishiko/pytube@fix-channel
+          sudo pip install git+https://github.com/felipeucelli/pytube
       - name: Run webscrap script
         run: |
           sudo python scripts/update_jsondb.py
