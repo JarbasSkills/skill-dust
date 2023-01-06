@@ -1,4 +1,5 @@
 from os.path import join, dirname
+import random
 
 from ovos_utils.log import LOG
 from ovos_utils.parse import fuzzy_match
@@ -21,12 +22,14 @@ class DustSkill(OVOSCommonPlaybackSkill):
         self.skill_icon = join(dirname(__file__), "ui", "dust_icon.png")
 
     def initialize(self):
-        url = "https://www.youtube.com/c/watchdust"
         bootstrap = "https://github.com/JarbasSkills/skill-dust/raw/dev/bootstrap.json"
         self.archive.bootstrap_from_url(bootstrap)
-        self.archive.monitor(url)
-        self.archive.setDaemon(True)
-        self.archive.start()
+        self.schedule_event(self._sync_db, random.randint(3600, 24 * 3600))
+
+    def _sync_db(self):
+        url = "https://www.youtube.com/c/watchdust"
+        self.archive.parse_videos(url)
+        self.schedule_event(self._sync_db, random.randint(3600, 24*3600))
 
     def normalize_title(self, title):
         title = title.lower().strip()
