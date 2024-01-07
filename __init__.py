@@ -12,10 +12,7 @@ from ovos_workshop.skills.common_play import OVOSCommonPlaybackSkill
 class DustSkill(OVOSCommonPlaybackSkill):
 
     def __init__(self, *args, **kwargs):
-        self.supported_media = [MediaType.MOVIE,
-                                MediaType.GENERIC,
-                                MediaType.SHORT_FILM,
-                                MediaType.VIDEO]
+        self.supported_media = [MediaType.SHORT_FILM]
         self.skill_icon = join(dirname(__file__), "ui", "dust_icon.png")
         self.archive = JsonStorageXDG("dust", subfolder="OCP")
         self.media_type_exceptions = {
@@ -151,6 +148,10 @@ class DustSkill(OVOSCommonPlaybackSkill):
             candidates = [video for video in self.archive.values()
                           if self.media_type_exceptions.get(video["url"], MediaType.SHORT_FILM) ==
                           MediaType.VIDEO_EPISODES]
+        elif media_type == MediaType.DOCUMENTARY:
+            candidates = [video for video in self.archive.values()
+                          if self.media_type_exceptions.get(video["url"], MediaType.SHORT_FILM) ==
+                          MediaType.DOCUMENTARY]
         elif media_type == MediaType.BEHIND_THE_SCENES:
             candidates = [video for video in self.archive.values()
                           if self.media_type_exceptions.get(video["url"], MediaType.SHORT_FILM) ==
@@ -168,7 +169,7 @@ class DustSkill(OVOSCommonPlaybackSkill):
                 for video in candidates:
                     yield {
                         "title": video["title"],
-                        "author": video["author"],
+                        "artist": video["author"],
                         "match_confidence": min(100, base_score),
                         "media_type": self.media_type_exceptions.get(video["url"], MediaType.SHORT_FILM),
                         "uri": "youtube//" + video["url"],
